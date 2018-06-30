@@ -295,7 +295,7 @@ macro_rules! mopafy_only_core_internal {
 #[macro_export]
 macro_rules! mopafy_only_core {
     ($trait_:ident $($t:tt)*) => {
-        $crate::parse_generics_shim! {
+        parse_generics_shim! {
             { .. },
             then mopafy_only_core_internal!($trait_),
             $($t)*
@@ -371,7 +371,7 @@ macro_rules! mopafy {
     // `Box<Any>` methods by just using `mopafy_only_core!(Trait);`.
     ($trait_:ident $($t:tt)*) => {
         mopafy_only_core!($trait_ $($t)*);
-        $crate::parse_generics_shim! {
+        parse_generics_shim! {
             { .. },
             then mopafy_internal!($trait_),
             $($t)*
@@ -416,13 +416,13 @@ mod tests {
 
     mopafy!(Parameterized<A, B>);
 
-    impl<'a, B> Parameterized<&'a i32, B> for Benny {
+    impl <'a, B> Parameterized<&'a i32, B> for Benny {
         fn test(&self, x: &'a i32, _: &B) -> i32 {
             *x
         }
     }
 
-    impl<A, B> Parameterized<A, B> for Chris {
+    impl <A, B> Parameterized<A, B> for Chris {
         fn test(&self, _: A, _: &B) -> i32 {
             0
         }
@@ -539,24 +539,16 @@ mod tests {
     #[test]
     fn parameterized() {
         let i123 = 123;
-        let mut benny = Benny {
-            kilograms_of_food: 13,
-        };
+        let mut benny = Benny { kilograms_of_food: 13 };
         let mut person: Box<Parameterized<&i32, String>> = Box::new(benny.clone());
         assert!(person.is::<Benny>());
         assert_eq!(person.downcast_ref::<Benny>(), Some(&benny));
         assert_eq!(person.downcast_mut::<Benny>(), Some(&mut benny));
-        assert_eq!(
-            person.downcast::<Benny>().map(|x| *x).ok(),
-            Some(benny.clone())
-        );
+        assert_eq!(person.downcast::<Benny>().map(|x| *x).ok(), Some(benny.clone()));
 
         person = Box::new(benny.clone());
         assert_eq!(unsafe { person.downcast_ref_unchecked::<Benny>() }, &benny);
-        assert_eq!(
-            unsafe { person.downcast_mut_unchecked::<Benny>() },
-            &mut benny
-        );
+        assert_eq!(unsafe { person.downcast_mut_unchecked::<Benny>() }, &mut benny);
         assert_eq!(unsafe { *person.downcast_unchecked::<Benny>() }, benny);
 
         person = Box::new(benny.clone());
@@ -573,24 +565,16 @@ mod tests {
 
     #[test]
     fn constrained() {
-        let mut benny = Benny {
-            kilograms_of_food: 13,
-        };
+        let mut benny = Benny { kilograms_of_food: 13 };
         let mut person: Box<Constrained<u8, f32, DeepStruct>> = Box::new(benny.clone());
         assert!(person.is::<Benny>());
         assert_eq!(person.downcast_ref::<Benny>(), Some(&benny));
         assert_eq!(person.downcast_mut::<Benny>(), Some(&mut benny));
-        assert_eq!(
-            person.downcast::<Benny>().map(|x| *x).ok(),
-            Some(benny.clone())
-        );
+        assert_eq!(person.downcast::<Benny>().map(|x| *x).ok(), Some(benny.clone()));
 
         person = Box::new(benny.clone());
         assert_eq!(unsafe { person.downcast_ref_unchecked::<Benny>() }, &benny);
-        assert_eq!(
-            unsafe { person.downcast_mut_unchecked::<Benny>() },
-            &mut benny
-        );
+        assert_eq!(unsafe { person.downcast_mut_unchecked::<Benny>() }, &mut benny);
         assert_eq!(unsafe { *person.downcast_unchecked::<Benny>() }, benny);
 
         person = Box::new(benny.clone());
